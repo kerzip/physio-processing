@@ -9,10 +9,10 @@ import mne
 import numpy as np
 import pandas as pd
 
-from eeg2mne import eeg2mne
-from shared.markers_example import Periods
-from shared.select_data import select_data
-from shared.recording import Recording
+from processing.eeg2mne import eeg2mne
+from processing.shared.markers_example import Periods
+from processing.shared.select_data import select_data
+from processing.shared.recording import Recording
 
 
 def filter_raw(raw):
