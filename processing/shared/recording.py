@@ -11,7 +11,7 @@ import itertools
 
 import pandas as pd
 
-from shared.xdf_convert import STREAM_TYPES, FILE_SUFFIXES, OutputFormat
+from processing.shared.xdf_convert import STREAM_TYPES, FILE_SUFFIXES, OutputFormat
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,11 @@ class ConditionOrder(T.NamedTuple):
 @dataclasses.dataclass
 class Recording:
     directory: pathlib.Path
+    '''Recording
+    Collection of functions to handle recorded .xdf files. 
+    Extracts data out of lsl streams and save it to parquet/csv.
+    Combines raw physio data with marker data.
+    '''
 
     @classmethod
     def find_by_pattern(
@@ -87,7 +92,7 @@ class Recording:
         pat = f"*{FILE_SUFFIXES[STREAM_TYPES.eye_tracking]}{ext.value}"
         return next(self.directory.glob(pat), None)
 
-    def eda_path(self, ext: OutputFormat = OutputFormat.PARQUET) -> pathlib.Path:
+    def ecg_path(self, ext: OutputFormat = OutputFormat.PARQUET) -> pathlib.Path:
         pat = f"*{FILE_SUFFIXES[STREAM_TYPES.brainvision_eda]}{ext.value}"
         return next(self.directory.glob(pat), None)
 
@@ -150,8 +155,12 @@ class Recording:
         return self.directory.name
 
     def condition_order(self) -> ConditionOrder:
+        """Check for order in which different test conditions were applied.
+
+        :return:
+        """
         script_parent_folder = pathlib.Path(__file__).parent
-        vp_condition_lookup_loc = script_parent_folder / "vp_condition_lookup.csv"
+        vp_condition_lookup_loc = script_parent_folder / "condition_lookup_example.csv"
         vp_condition_lookup = pd.read_csv(vp_condition_lookup_loc, index_col="VP-Code")
         conditions_raw = vp_condition_lookup.loc[self.vp_code]
         conditions = [Condition(cond) for cond in conditions_raw]
@@ -161,6 +170,13 @@ class Recording:
 
 
     def get_bads(self):
+        """Check for bad channels in lookup file and return them as list
+
+        :param self:
+        :return:
+        bad_list : list
+        bad_list_list : list
+        """
         script_parent_folder = pathlib.Path(__file__).parent
         vp_bads_lookup_loc = script_parent_folder / "bads_lookup_example.csv"
         vp_bads_lookup = pd.read_csv(vp_bads_lookup_loc, index_col="VP-Code")

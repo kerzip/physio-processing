@@ -7,8 +7,8 @@ import logging
 import typing as T
 import pandas as pd
 
-from shared.markers_example import Periods
-from shared.markers_example import Markers
+from processing.shared.markers_example import Periods
+from processing.shared.markers_example import Markers
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ import click
 import pyxdf
 import pandas as pd
 
-from shared.markers_v2 import MarkersV2
+from processing.shared.markers_example import Markers
 
 
 class STREAM_TYPES:
