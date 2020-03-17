@@ -16,9 +16,7 @@ from shared.recording import Recording
 
 
 def filter_raw(raw):
-    '''
-    Bandpass filter
-    '''
+    # bandpass filter
     fmin, fmax = 1, 48  # to adjust
 
     raw_fir_filtered = raw.filter(
