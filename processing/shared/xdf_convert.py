@@ -1,4 +1,5 @@
 """
+Author: Pablo Prietz
 Usage: python xd_convert.py [OPTIONS] [FILENAMES]...
 """
 import enum
@@ -9,7 +10,7 @@ import click
 import pyxdf
 import pandas as pd
 
-from shared.markers_v2 import MarkersV2
+from processing.shared.markers_example import Markers
 
 
 class STREAM_TYPES:
@@ -41,7 +42,7 @@ def xdf_convert(format_, filenames):
 
     filenames: List of XDF file paths
 
-    Output: Each stream will be stored as an individual files next to their corresponding XDF file.
+    Output: Each stream will be stored as an individual file next to their corresponding XDF file.
     """
     start_times = {}
     filenames = sorted(pathlib.Path(fn).resolve() for fn in filenames)

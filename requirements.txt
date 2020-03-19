@@ -1,0 +1,9 @@
+click
+biosppy
+pandas
+pathlib
+pyxdf
+itertools
+mne
+neurokit
+numpy

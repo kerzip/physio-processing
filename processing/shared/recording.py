@@ -11,26 +11,21 @@ import itertools
 
 import pandas as pd
 
-from shared.xdf_convert import STREAM_TYPES, FILE_SUFFIXES, OutputFormat
+from processing.shared.xdf_convert import STREAM_TYPES, FILE_SUFFIXES, OutputFormat
 
 logger = logging.getLogger(__name__)
 
-# definition of conditions
-class Condition(enum.Enum):
-    H = "hard"
-    C = "control"
-    E = "easy"
 
-# order in which condition blocks were presented
-class ConditionOrder(T.NamedTuple):
-    block0: Condition
-    block1: Condition
-    block2: Condition
 
 
 @dataclasses.dataclass
 class Recording:
     directory: pathlib.Path
+    '''Recording
+    Collection of functions to handle recorded .xdf files. 
+    Extracts data out of lsl streams and save it to parquet/csv.
+    Combines raw physio data with marker data.
+    '''
 
     @classmethod
     def find_by_pattern(
@@ -87,7 +82,7 @@ class Recording:
         pat = f"*{FILE_SUFFIXES[STREAM_TYPES.eye_tracking]}{ext.value}"
         return next(self.directory.glob(pat), None)
 
-    def eda_path(self, ext: OutputFormat = OutputFormat.PARQUET) -> pathlib.Path:
+    def ecg_path(self, ext: OutputFormat = OutputFormat.PARQUET) -> pathlib.Path:
         pat = f"*{FILE_SUFFIXES[STREAM_TYPES.brainvision_eda]}{ext.value}"
         return next(self.directory.glob(pat), None)
 
@@ -149,26 +144,6 @@ class Recording:
     def vp_code(self):
         return self.directory.name
 
-    def condition_order(self) -> ConditionOrder:
-        script_parent_folder = pathlib.Path(__file__).parent
-        vp_condition_lookup_loc = script_parent_folder / "vp_condition_lookup.csv"
-        vp_condition_lookup = pd.read_csv(vp_condition_lookup_loc, index_col="VP-Code")
-        conditions_raw = vp_condition_lookup.loc[self.vp_code]
-        conditions = [Condition(cond) for cond in conditions_raw]
-        condition_order = ConditionOrder(*conditions)
-        return condition_order
 
 
-
-    def get_bads(self):
-        script_parent_folder = pathlib.Path(__file__).parent
-        vp_bads_lookup_loc = script_parent_folder / "bads_lookup_example.csv"
-        vp_bads_lookup = pd.read_csv(vp_bads_lookup_loc, index_col="VP-Code")
-        bad_raw = vp_bads_lookup.loc[self.vp_code]
-        bad_list_list = bad_raw.values.tolist()
-        if len(bad_list_list) > 1:
-            bad_list = list(itertools.chain(*bad_list_list))
-            return bad_list
-        else:
-            return bad_list_list
 
