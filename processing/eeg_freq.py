@@ -34,7 +34,7 @@ def filter_raw(raw):
     return raw_fir_filtered
 
 
-def check_for_bads(data_raw, b_ch):
+def check_for_bads(data_raw, b_ch=None):
     if not b_ch:
         print('no bad channels')
         return False
@@ -44,7 +44,7 @@ def check_for_bads(data_raw, b_ch):
         return True
 
 
-def mod_chan_list(data_raw, vp_code):
+def mod_chan_list(data_raw, vp_code=None):
     bad = data_raw.info['bads']
     channels = data_raw.info['ch_names']
     for x in bad:
