@@ -11,8 +11,9 @@ import pandas as pd
 
 from processing.eeg2mne import eeg2mne
 from processing.shared.markers_example import Periods
-from processing.shared.select_data import select_data
+from processing.shared.select_data import select_from_data, extract_periods, split
 from processing.shared.recording import Recording
+from processing.helpers import Helper
 
 
 def filter_raw(raw):
@@ -66,33 +67,6 @@ def do_welch(raw):
     return psds_welch, freqs
 
 
-def split(period_data, *, num_periods):
-    start, end = period_data.index[[0, -1]]
-    intervals = pd.interval_range(start, end, num_periods)
-    cuts = pd.cut(period_data.index, intervals)
-    groups = period_data.groupby(cuts)
-    return groups
-
-
-def extract_periods(block, num_task_subblocks=6):
-    data, markers = block
-    basline_h = next(select_data(data, markers, Periods.baseline_h))
-    basline_l = next(select_data(data, markers, Periods.baseline_l))
-
-    task, _ = next(select_data(data, markers, Periods.task))
-    subblocks = split(task, num_periods=num_task_subblocks)
-    subblocks = map(lambda groupby: groupby[1], subblocks)
-
-    baselines = (basline_h[0], basline_l[0])
-    all_periods = itertools.chain(baselines, subblocks)
-
-    period_names = ["baseline_h", "baseline_l"]
-    period_names += [f"task_subblock_{idx}" for idx in range(num_task_subblocks)]
-    period_concat = pd.concat(
-        all_periods, keys=period_names, names=["period", data.index.name]
-    )
-    return period_concat
-
 
 def calc_eeg_stats_per_band(psds_welch, channels, subblock_idc):
     Freq_bands = {
@@ -132,7 +106,7 @@ def main(folders):
         R = Recording(path)
         print(f"Loading {path}")
         try:
-            conditions = R.condition_order()
+            conditions = Helper.condition_order()
         except KeyError:
             print(f"\tUnknown vp_code {R.vp_code}. Aborting.")
             continue
@@ -149,7 +123,7 @@ def main(folders):
         data_filtered = filter_raw(data_raw)
 
         print("\tCheck for bad channels")
-        b_ch = R.get_bads()
+        b_ch = Helper.get_bads()
         if check_for_bads(data_raw, b_ch) == True:
             psds_welch, freqs = do_welch(data_filtered)
             channels = mod_chan_list(data_raw, R.vp_code)
@@ -165,7 +139,7 @@ def main(folders):
         welch_idc = np.arange(n_seg)
         welch_ts = welch_idc + eeg_ts_first
         welch_idc_df = pd.DataFrame(welch_idc, index=welch_ts)
-        blocks = select_data(welch_idc_df, markers, Periods.block)
+        blocks = select_from_data(welch_idc_df, markers, Periods.block)
 
         print("\tCalc Welch.")
         calc_eeg_stats_per_band_fixed = functools.partial(calc_eeg_stats_per_band, psds_welch, channels)
@@ -174,7 +148,7 @@ def main(folders):
 
         for cond, block in zip(conditions, blocks):
             print(f"\tCalculating statistics for {cond.value}...")
-            periods = extract_periods(block)
+            periods = extract_periods(block, num_task_subblocks=6)
 
             eeg_stats_per_band = periods.groupby(level=0).apply(calc_eeg_stats_per_band_fixed)
             channel_names = eeg_stats_per_band.columns
