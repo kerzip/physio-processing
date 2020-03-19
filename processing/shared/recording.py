@@ -15,17 +15,7 @@ from processing.shared.xdf_convert import STREAM_TYPES, FILE_SUFFIXES, OutputFor
 
 logger = logging.getLogger(__name__)
 
-# definition of conditions
-class Condition(enum.Enum):
-    H = "hard"
-    C = "control"
-    E = "easy"
 
-# order in which condition blocks were presented
-class ConditionOrder(T.NamedTuple):
-    block0: Condition
-    block1: Condition
-    block2: Condition
 
 
 @dataclasses.dataclass
@@ -154,37 +144,6 @@ class Recording:
     def vp_code(self):
         return self.directory.name
 
-    def condition_order(self) -> ConditionOrder:
-        """Check for order in which different test conditions were applied.
-
-        :return:
-        """
-        script_parent_folder = pathlib.Path(__file__).parent
-        vp_condition_lookup_loc = script_parent_folder / "condition_lookup_example.csv"
-        vp_condition_lookup = pd.read_csv(vp_condition_lookup_loc, index_col="VP-Code")
-        conditions_raw = vp_condition_lookup.loc[self.vp_code]
-        conditions = [Condition(cond) for cond in conditions_raw]
-        condition_order = ConditionOrder(*conditions)
-        return condition_order
 
 
-
-    def get_bads(self):
-        """Check for bad channels in lookup file and return them as list
-
-        :param self:
-        :return:
-        bad_list : list
-        bad_list_list : list
-        """
-        script_parent_folder = pathlib.Path(__file__).parent
-        vp_bads_lookup_loc = script_parent_folder / "bads_lookup_example.csv"
-        vp_bads_lookup = pd.read_csv(vp_bads_lookup_loc, index_col="VP-Code")
-        bad_raw = vp_bads_lookup.loc[self.vp_code]
-        bad_list_list = bad_raw.values.tolist()
-        if len(bad_list_list) > 1:
-            bad_list = list(itertools.chain(*bad_list_list))
-            return bad_list
-        else:
-            return bad_list_list
 
